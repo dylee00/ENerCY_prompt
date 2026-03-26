@@ -6,16 +6,16 @@
 
 이 저장소에서는 실제 멀티 에이전트 런타임을 사용하지 않지만, 아래 4개의 전문 서브에이전트를 지휘한다고 가정하고 작업을 진행한다.
 
-1. 데이터 모델링 서브에이전트
-2. 모델 학습 서브에이전트
-3. 백엔드 개발 서브에이전트
-4. 프론트엔드 개발 서브에이전트
+1. 데이터 서브에이전트
+2. 모델 서브에이전트
+3. 백엔드 서브에이전트
+4. 프론트엔드 서브에이전트
 
 이 프로젝트는 Codex 단독으로 운영한다.
 외부 오케스트레이션 프레임워크를 전제로 두지 않는다.
-대신 `AGENTS.md`, `PLANS.md`, `.codex/skills/`, `docs/`를 협업과 조율의 기준으로 사용한다.
+대신 `AGENTS.md`, `PLANS.md`, `docs/` 아래 문서를 협업과 조율의 기준으로 사용한다.
 
-여러 도메인에 걸친 작업이 들어오면 곧바로 구현부터 하지 말고, 먼저 작업을 도메인별로 분해하고 필요한 문서를 정리한 다음, 의존성 순서대로 진행한다.
+여러 도메인에 걸친 작업이 들어오면 곧바로 구현부터 하지 말고, 먼저 작업을 도메인별로 분해하고 필요한 계약과 문서를 정리한 다음, 의존성 순서대로 진행한다.
 
 ---
 
@@ -24,22 +24,23 @@
 이 저장소에서 작성하는 모든 설명성 산출물은 기본적으로 한국어로 작성한다.
 
 한국어 작성 대상:
-- 계획
+- 계획 문서
 - 설계 문서
+- 역할별 프롬프트
 - 진행 상황 요약
 - 의사결정 기록
 - 가정 정리
-- 보고서
+- 검증 결과
 - 사용자에게 보여줄 문구 초안
-- Codex의 작업 설명 및 변경 이유
+- 작업 설명 및 변경 이유
 
 예외:
 - 코드 식별자
-- 라이브러리/프레임워크 고유 명칭
+- 라이브러리/프레임워크 이름
 - API 필드명
 - 파일명
 - 폴더명
-- 데이터셋의 원본 컬럼명
+- 데이터셋 원본 컬럼명
 - 코드 실행에 필요한 최소한의 영문 표현
 
 코드 주석은 가능하면 한국어로 작성하되, 라이브러리 관례상 영문이 더 자연스러운 경우에는 혼용 가능하다.
@@ -62,7 +63,7 @@
 필수 요구사항:
 - 예측 모델은 **LSTM 기반**이어야 한다.
 - 오일 종류와 무관하게 **동일한 하이퍼파라미터 세트**를 사용해야 한다.
-- **데이터 모델링 / 모델 학습 / 백엔드 / 프론트엔드** 책임을 분리해야 한다.
+- **데이터 / 모델 / 백엔드 / 프론트엔드** 책임을 분리해야 한다.
 - UI는 최소한 아래 정보를 보여야 한다.
   - 현재 판단 시점
   - 예측 구간 내 최대 예측 유가
@@ -76,6 +77,73 @@
 
 ---
 
+## 현재 저장소 구조 기준 문서 체계
+
+현재 저장소는 역할별 상세 문서를 많이 쪼갠 상태가 아니라, 도메인별 `init.md`를 중심으로 운영한다.
+
+현재 기준 문서 위치:
+
+### 루트
+- `AGENTS.md`
+- `PLANS.md`
+
+### 개요
+- `docs/00_overview/init.md`
+
+### 데이터
+- `docs/01_data/init.md`
+
+### 모델
+- `docs/02_model/init.md`
+
+### 백엔드
+- `docs/03_backend/init.md`
+
+### 프론트엔드
+- `docs/04_frontend/init.md`
+
+### 공통
+- `docs/05_shared/init.md`
+
+현재 단계에서는 각 도메인의 `init.md`를 해당 서브에이전트의 작업 프롬프트이자 기준 문서로 취급한다.
+
+---
+
+## 실행 환경 및 의존성 규칙
+
+이 프로젝트의 Python 실행 환경은 루트 디렉토리의 단일 가상환경으로 통일한다.
+
+- 공용 가상환경 이름은 `ener` 로 한다.
+- 데이터, 모델, 백엔드 도메인은 모두 동일한 `ener` 가상환경을 사용한다.
+- 프론트엔드는 별도의 Node.js 환경을 사용하며, Python 가상환경 공유 대상이 아니다.
+- 여러 개의 Python 가상환경을 만들지 않는다.
+- 도메인별로 서로 다른 Python 인터프리터를 사용하지 않는다.
+- 실행, 테스트, 검증 명령은 모두 `ener` 활성화 기준으로 수행한다.
+
+기본 원칙:
+1. 루트에 `ener` 가 없으면 먼저 생성한다.
+2. 모든 Python 작업은 `ener` 활성화 후 수행한다.
+3. 데이터 / 모델 / 백엔드 코드는 동일한 Python 버전과 동일한 공용 의존성 집합을 기준으로 맞춘다.
+4. 환경 차이로 생기는 문제를 막기 위해 도메인별 별도 가상환경을 만들지 않는다.
+
+가상환경 생성 예시:
+- `python3 -m venv ener`
+
+가상환경 활성화 예시:
+- `source ener/bin/activate`
+
+Python 버전 원칙:
+- Python 3.11을 기본 기준으로 사용한다.
+
+의존성 관리 원칙:
+- Python 의존성은 루트 공용 의존성 파일로 관리한다.
+- 예: `requirements.txt`
+- 데이터, 모델, 백엔드 도메인은 공용 의존성 파일을 기준으로 환경을 맞춘다.
+- 특정 도메인에 필요한 라이브러리를 추가한 경우, 관련 문서와 공용 의존성 파일을 함께 갱신한다.
+- 개별 도메인 폴더 안에 별도의 Python 의존성 파일을 임의로 만들지 않는다. 특별한 이유가 있으면 먼저 문서에 근거를 남긴다.
+
+---
+
 ## 작업 방식
 
 이 저장소는 **문서 우선(document-first)** 방식으로 진행한다.
@@ -86,11 +154,13 @@
 기본 작업 순서:
 1. `AGENTS.md`를 읽고 작업 원칙을 이해한다.
 2. `PLANS.md`를 읽고 현재 단계와 우선순위를 확인한다.
-3. 관련 `docs/` 문서를 읽는다.
-4. 필요한 경우 `.codex/skills/`의 해당 스킬 문서를 읽는다.
-5. 필요한 문서를 먼저 작성하거나 갱신한다.
-6. 그 다음 구현을 진행한다.
-7. 의미 있는 변경 후에는 계획, 가정, 의사결정, 진행 상태를 갱신한다.
+3. 공통 문서인 `docs/05_shared/*`를 읽는다.
+4. 작업 도메인의 `init.md`를 읽는다.
+5. Python 작업이 필요한 경우 루트 `ener` 가상환경 기준으로 실행 환경을 맞춘다.
+6. 필요한 경우 공통 계약을 먼저 정리하거나 수정한다.
+7. 필요한 문서를 먼저 작성하거나 갱신한다.
+8. 그 다음 구현을 진행한다.
+9. 의미 있는 변경 후에는 `PLANS.md`, 가정 문서, 의사결정 문서를 갱신한다.
 
 작은 범위의 단순 수정이 아닌 이상, 문서 정리를 생략하지 않는다.
 
@@ -102,12 +172,14 @@
 
 1. `AGENTS.md` 읽기
 2. `PLANS.md` 읽기
-3. `docs/` 구조 점검
-4. 핵심 기초 문서의 존재 여부 확인
-5. 부족한 문서를 먼저 보완
-6. 의존성 순서대로 도메인 작업 진행
+3. `docs/05_shared/init.md` 읽기
+4. 현재 작업 대상 도메인의 `init.md` 읽기
+5. 현재 단계가 문서 정리 단계인지, 구현 단계인지 확인
+6. 필요한 계약과 의존성을 먼저 점검
+7. Python 작업이 필요한 경우 루트 `ener` 가상환경과 공용 의존성 파일 존재 여부 확인
+8. 그 다음 작업 수행
 
-저장소가 아직 하네스 상태라면, 구현보다 먼저 문서 골격과 기준을 정리하는 것을 우선한다.
+저장소가 아직 문서 하네스 또는 프롬프트 통합 단계라면, 구현보다 먼저 문서와 계약을 정리하는 것을 우선한다.
 
 ---
 
@@ -117,29 +189,24 @@
 
 1. `AGENTS.md`
 2. `PLANS.md`
-3. `docs/00_overview/project-summary.md`
-4. `docs/06_shared/acceptance-criteria.md`
-5. 작업 도메인에 해당하는 문서
-6. 해당 스킬 문서
+3. `docs/05_shared/init.md`
+4. 작업 도메인의 `init.md`
 
 도메인별 기본 읽기 대상:
 
 ### 데이터 작업
-- `docs/01_data/*`
-- `.codex/skills/data-modeling/SKILL.md`
+- `docs/01_data/init.md`
 
 ### 모델 작업
-- `docs/02_modeling/*`
-- `docs/03_mlflow_monitoring/*`
-- `.codex/skills/model-training/SKILL.md`
+- `docs/02_model/init.md`
 
 ### 백엔드 작업
-- `docs/04_backend/*`
-- `.codex/skills/backend-development/SKILL.md`
+- `docs/03_backend/init.md`
 
 ### 프론트엔드 작업
-- `docs/05_frontend/*`
-- `.codex/skills/frontend-development/SKILL.md`
+- `docs/04_frontend/init.md`
+
+여러 도메인에 걸친 작업이라면 관련 도메인의 `init.md`를 모두 읽고, 충돌 여부를 먼저 확인한다.
 
 ---
 
@@ -153,6 +220,7 @@
 - 백엔드 계약과 프론트엔드 UI 기대치가 일치하도록 관리한다.
 - 모델 출력이 실제 제품 요구사항을 만족하도록 조정한다.
 - 주요 구현 전후로 문서를 갱신한다.
+- 병렬 작업 후 병합 순서와 검증 절차를 명확히 한다.
 - 저장소 전체의 일관성을 유지한다.
 
 요구사항이 모호할 때는 아래 기준을 우선한다.
@@ -166,30 +234,28 @@
 
 ## 도메인별 책임 범위
 
-### 1. 데이터 모델링 도메인
+### 1. 데이터 도메인
 
 담당 범위:
 - 데이터셋 구조 파악
 - 스키마 정의
 - 전처리 규칙
-- 오일 시계열 정의
+- 오일 종류 구분 기준
+- 시계열 정렬 기준
 - 시퀀스/윈도우 생성 정책
 - 학습/검증/테스트 분리 기준
-- 피처 엔지니어링 규칙
 - 데이터 품질 관련 가정
 
-주요 문서:
-- `docs/01_data/dataset-source.md`
-- `docs/01_data/data-schema.md`
-- `docs/01_data/preprocessing-policy.md`
-- `docs/01_data/train-valid-test-split.md`
-- `docs/01_data/oil-series-definition.md`
-- `docs/02_modeling/feature-engineering-spec.md`
+기준 문서:
+- `docs/01_data/init.md`
 
-### 2. 모델 학습 도메인
+---
+
+### 2. 모델 도메인
 
 담당 범위:
 - LSTM 구조 설계
+- 입력/출력 구조 정의
 - 하이퍼파라미터 정책
 - MLflow 실험 추적
 - 평가지표 정의
@@ -197,16 +263,10 @@
 - 재학습 트리거 정책
 - 추론 출력 구조 정의
 
-주요 문서:
-- `docs/02_modeling/lstm-modeling-spec.md`
-- `docs/02_modeling/hyperparameter-policy.md`
-- `docs/02_modeling/evaluation-metrics.md`
-- `docs/02_modeling/inference-output-spec.md`
-- `docs/03_mlflow_monitoring/mlflow-tracking-policy.md`
-- `docs/03_mlflow_monitoring/model-selection-policy.md`
-- `docs/03_mlflow_monitoring/performance-monitoring-spec.md`
-- `docs/03_mlflow_monitoring/retraining-trigger-policy.md`
-- `docs/03_mlflow_monitoring/threshold-rule.md`
+기준 문서:
+- `docs/02_model/init.md`
+
+---
 
 ### 3. 백엔드 도메인
 
@@ -214,17 +274,15 @@
 - API 설계
 - 예측 결과 서빙
 - 구매 추천 로직 연계
-- MLflow 및 모델 레지스트리 연동 지점
 - 모니터링 엔드포인트
 - 오류 처리 정책
 - 프론트엔드가 소비할 응답 스키마
+- recommendation 로직의 최종 판단 수행
 
-주요 문서:
-- `docs/04_backend/backend-architecture.md`
-- `docs/04_backend/api-contract.md`
-- `docs/04_backend/domain-model.md`
-- `docs/04_backend/recommendation-logic.md`
-- `docs/04_backend/error-handling-policy.md`
+기준 문서:
+- `docs/03_backend/init.md`
+
+---
 
 ### 4. 프론트엔드 도메인
 
@@ -232,15 +290,12 @@
 - 대시보드 구조
 - 예측 시각화
 - 구매 추천 UI
-- 재학습/모니터링 상태 UI
+- 모니터링 상태 UI
 - 클라이언트 측 API 소비 규칙
+- 백엔드 응답을 바탕으로 한 표시 로직
 
-주요 문서:
-- `docs/05_frontend/frontend-architecture.md`
-- `docs/05_frontend/dashboard-spec.md`
-- `docs/05_frontend/forecast-ui-spec.md`
-- `docs/05_frontend/purchase-recommendation-ui-spec.md`
-- `docs/05_frontend/monitoring-ui-spec.md`
+기준 문서:
+- `docs/04_frontend/init.md`
 
 ---
 
@@ -273,62 +328,36 @@
   - 임계치 정책 기반 추천 메시지
 
 ### 아키텍처 규칙
-- 데이터 모델링, 모델 학습, 백엔드, 프론트엔드를 분리한다.
+- 데이터, 모델, 백엔드, 프론트엔드의 책임을 분리한다.
 - 모델 내부 표현과 UI를 직접 결합하지 않는다.
 - 백엔드는 모델 출력을 제품용 안정적인 응답 계약으로 변환해야 한다.
 - 프론트엔드는 백엔드의 비즈니스 로직을 다시 구현하지 않는다.
+- recommendation 로직의 최종 판단은 백엔드에 둔다.
+- 프론트엔드는 추천 결과를 표시하는 역할에 집중한다.
 
 ---
 
-## 문서 우선 산출물
+## 현재 단계에서의 문서 우선 산출물
 
-구현이 본격화되기 전에 아래 문서들이 존재하거나 초안 수준으로라도 정리되어 있어야 한다.
+현재 저장소 구조 기준으로, 구현 전에 아래 문서가 존재하거나 최소 초안 수준으로 정리되어 있어야 한다.
 
 ### 개요
-- `docs/00_overview/project-summary.md`
-- `docs/00_overview/scope.md`
-- `docs/00_overview/milestones.md`
+- `docs/00_overview/init.md`
 
 ### 데이터
-- `docs/01_data/dataset-source.md`
-- `docs/01_data/data-schema.md`
-- `docs/01_data/preprocessing-policy.md`
-- `docs/01_data/train-valid-test-split.md`
-- `docs/01_data/oil-series-definition.md`
+- `docs/01_data/init.md`
 
-### 모델링
-- `docs/02_modeling/lstm-modeling-spec.md`
-- `docs/02_modeling/hyperparameter-policy.md`
-- `docs/02_modeling/feature-engineering-spec.md`
-- `docs/02_modeling/evaluation-metrics.md`
-- `docs/02_modeling/inference-output-spec.md`
-
-### MLflow 및 모니터링
-- `docs/03_mlflow_monitoring/mlflow-tracking-policy.md`
-- `docs/03_mlflow_monitoring/model-selection-policy.md`
-- `docs/03_mlflow_monitoring/performance-monitoring-spec.md`
-- `docs/03_mlflow_monitoring/retraining-trigger-policy.md`
-- `docs/03_mlflow_monitoring/threshold-rule.md`
+### 모델
+- `docs/02_model/init.md`
 
 ### 백엔드
-- `docs/04_backend/backend-architecture.md`
-- `docs/04_backend/api-contract.md`
-- `docs/04_backend/domain-model.md`
-- `docs/04_backend/recommendation-logic.md`
-- `docs/04_backend/error-handling-policy.md`
+- `docs/03_backend/init.md`
 
 ### 프론트엔드
-- `docs/05_frontend/frontend-architecture.md`
-- `docs/05_frontend/dashboard-spec.md`
-- `docs/05_frontend/forecast-ui-spec.md`
-- `docs/05_frontend/purchase-recommendation-ui-spec.md`
-- `docs/05_frontend/monitoring-ui-spec.md`
+- `docs/04_frontend/init.md`
 
 ### 공통
-- `docs/06_shared/glossary.md`
-- `docs/06_shared/acceptance-criteria.md`
-- `docs/06_shared/decision-log.md`
-- `docs/06_shared/assumptions.md`
+- `docs/05_shared/init.md`
 
 ---
 
@@ -337,20 +366,47 @@
 `PLANS.md`는 살아있는 실행 계획 문서다.
 
 여기에는 아래 내용을 관리한다.
-- 마일스톤
 - 현재 단계
+- 이번 라운드 목표
+- 병렬 작업 범위
 - 막힌 이슈
 - 도메인 간 의존성
 - 미해결 질문
 - 다음 작업
+- 병합 순서
+- 검증 항목
 
-아래 상황에서는 `PLANS.md`를 반드시 갱신한다.
-- 큰 단계에 진입할 때
-- 구현 전략이 바뀔 때
-- 중요한 모호성이 해소되었을 때
-- 여러 도메인에 영향을 주는 blocker를 발견했을 때
+구현이나 문서 작업이 `PLANS.md`와 어긋나면, 무시하고 진행하지 말고 먼저 `PLANS.md`를 확인하거나 갱신한다.
 
-구현이 `PLANS.md`와 문서에서 벗어나지 않도록 유지한다.
+---
+
+## PLANS.md 갱신 의무
+
+`PLANS.md`는 단순 참고 문서가 아니라 현재 작업 라운드의 실행 상태를 반영하는 문서다.
+
+작업 전:
+- 현재 단계
+- 이번 작업 목표
+- 병렬 작업 범위
+- 선행 계약 또는 확인 필요 항목
+을 확인한다.
+
+작업 중:
+- 공통 계약이 변경되거나
+- blocker가 생기거나
+- 병렬 작업 범위가 달라지거나
+- 병합 순서가 달라지면
+즉시 `PLANS.md`를 갱신한다.
+
+작업 후:
+- 완료한 작업
+- 아직 남은 작업
+- 새로 확인된 blocker
+- 다음 단계
+- 병합 또는 검증 필요 사항
+을 `PLANS.md`에 반영한다.
+
+작업 결과가 `PLANS.md`에 반영되지 않았다면 해당 작업은 완전히 종료된 것으로 보지 않는다.
 
 ---
 
@@ -359,14 +415,14 @@
 작업이 여러 도메인에 걸치면 아래 순서로 처리한다.
 
 1. 영향 받는 도메인을 식별한다.
-2. 어떤 문서를 먼저 바꿔야 하는지 정리한다.
-3. 계약과 의존성을 먼저 확정한다.
+2. 어떤 공통 계약을 먼저 맞춰야 하는지 정리한다.
+3. 필요한 문서를 먼저 수정한다.
 4. 하위 의존성을 먼저 구현한다.
 5. 일관성을 검증한다.
-6. 진행 상태와 의사결정을 기록한다.
+6. `PLANS.md`, 가정 문서, 의사결정 문서를 갱신한다.
 
 권장 의존성 순서:
-1. 데이터 가정
+1. 데이터 가정 및 입력 구조
 2. 모델 입력/출력 명세
 3. 모니터링 및 임계치 정책
 4. 백엔드 계약
@@ -382,11 +438,49 @@
 
 ---
 
+## 병렬 작업 및 병합 규칙
+
+현재 프로젝트는 역할별 프롬프트를 바탕으로 도메인별 병렬 구현을 수행할 수 있다.
+단, 병렬 구현 전에 아래 계약은 최소 수준으로 확정되어 있어야 한다.
+
+- 데이터 입력 구조
+- 모델 출력 구조
+- 예측 horizon
+- threshold 정책의 최소 기준
+- recommendation 응답 구조
+- 프론트엔드가 소비할 API 필드
+
+병렬 작업 중에는 아래를 지킨다.
+
+### 데이터
+- 모델 입력 규격을 벗어나지 않는다.
+
+### 모델
+- 백엔드가 필요로 하는 출력 필드를 누락하지 않는다.
+
+### 백엔드
+- recommendation 로직을 프론트엔드로 넘기지 않는다.
+
+### 프론트엔드
+- threshold 계산과 추천 판단을 직접 구현하지 않는다.
+
+### 공통
+- 같은 정책을 여러 곳에 중복 하드코딩하지 않는다.
+
+병렬 작업 후 병합은 아래 순서를 기본으로 한다.
+1. 데이터
+2. 모델
+3. 백엔드
+4. 프론트엔드
+5. 통합 검증 및 수정
+
+---
+
 ## 데이터 처리 규칙
 
 실제 전체 데이터셋을 소스 코드 안에 하드코딩하지 않는다.
 
-예상 디렉토리 구조:
+예상 데이터 디렉토리 구조:
 - 원본 다운로드 데이터:
   - `data/raw/fuels_futures_data/`
 - 정제 중간 데이터:
@@ -423,20 +517,20 @@
 - 오일 종류나 예측 구간에 대한 미문서 가정
 
 ---
-
 ## 검증 규칙
 
 모든 중요한 산출물은 검증 가능해야 한다.
 
 최소한 아래를 확인한다.
-- 데이터 가정이 문서화되어 있는가
+- 데이터 입력 구조가 문서화되어 있는가
 - 모델 입력/출력이 문서화되어 있는가
 - 하이퍼파라미터 정책이 문서와 구현에서 일치하는가
 - MLflow 사용 방식이 문서와 구현에 반영되어 있는가
 - 재학습 트리거 정책이 문서화되어 있고 구현 가능한가
-- 백엔드 API 계약이 UI 요구사항과 맞는가
+- 백엔드 API 계약이 프론트엔드 요구사항과 맞는가
 - 프론트엔드가 필수 예측/추천 정보를 표시하는가
-- acceptance criteria가 점검 가능하게 유지되는가
+- `docs/05_shared/init.md`의 공통 계약, 미정 사항, 확정 원칙이 현재 상태를 반영하는가
+- 병렬 구현 전 체크리스트가 점검 가능하게 유지되는가
 
 코드가 존재하는 경우에는, 단순 설명보다 검증 절차를 함께 추가하는 방향을 우선한다.
 
@@ -446,42 +540,59 @@
 
 프로젝트의 기억은 아래 문서에 남긴다.
 
-- `docs/06_shared/decision-log.md`
-  - 중요한 구조/정책 결정 기록
-- `docs/06_shared/assumptions.md`
-  - 임시 가정 기록
-- `docs/99_reports/implementation-status.md`
-  - 현재 구현 진행 상태
-- `docs/99_reports/risks-and-issues.md`
-  - 위험 요소와 blocker
-- `docs/99_reports/experiment-log.md`
-  - 모델 실험 요약
+- `PLANS.md`
+  - 현재 단계
+  - 다음 작업
+  - 병렬 구현 범위
+  - 병합 순서
+  - blocker
+- `docs/05_shared/init.md`
+  - 공통 계약
+  - 미정 사항
+  - 확정된 핵심 원칙
+  - 이번 라운드 완료 기준
+- 관련 도메인 문서
+  - `docs/01_data/init.md`
+  - `docs/02_model/init.md`
+  - `docs/03_backend/init.md`
+  - `docs/04_frontend/init.md`
 
 큰 작업 이후에는, 다음 작업자가 아래를 추측하지 않고 이해할 수 있어야 한다.
 - 무엇이 바뀌었는가
 - 왜 바뀌었는가
 - 무엇이 남아 있는가
 - 무엇이 이것에 의존하는가
+- 다음에 무엇을 해야 하는가
 
 ---
 
-## 스킬 문서 사용 규칙
+## 작업 종료 시 필수 기록
 
-도메인 작업 시 해당 스킬 문서를 적극 활용한다.
+큰 작업이나 의미 있는 변경이 끝나면 아래를 반드시 점검한다.
 
-스킬 매핑:
-- 조율 및 순서 통제:
-  - `.codex/skills/team-lead/SKILL.md`
-- 데이터 작업:
-  - `.codex/skills/data-modeling/SKILL.md`
-- 모델 작업:
-  - `.codex/skills/model-training/SKILL.md`
-- 백엔드 작업:
-  - `.codex/skills/backend-development/SKILL.md`
-- 프론트엔드 작업:
-  - `.codex/skills/frontend-development/SKILL.md`
+1. `PLANS.md` 업데이트
+- 현재 단계 상태 반영
+- 완료 항목 체크
+- 다음 작업 갱신
+- blocker 또는 미정 사항 반영
+- 병합 또는 검증 필요 사항 반영
 
-작업이 여러 경계를 넘으면, 먼저 팀 리드 관점에서 분해하고 그 다음 순차적으로 실행한다.
+2. `docs/05_shared/init.md` 업데이트
+- 공통 계약 변경 사항 반영
+- 새로 발견된 미정 사항 반영
+- 확정된 핵심 원칙 반영
+- 병렬 구현 전 체크리스트 상태 반영
+
+3. 관련 도메인 문서 업데이트
+- 구현 또는 프롬프트 변경 사항 반영
+- 입력/출력 구조 변경 사항 반영
+- 다른 도메인과 연결되는 계약 변경 사항 반영
+
+병렬 작업 후에는 특히 아래를 명확히 남긴다.
+- 어떤 도메인이 완료되었는가
+- 어떤 계약이 확정되었는가
+- 어떤 항목이 아직 병합 전 상태인가
+- 다음 병합 순서는 무엇인가
 
 ---
 
@@ -493,21 +604,22 @@
 - 관련 문서가 갱신되어 있다.
 - 구현이 문서와 일치한다.
 - 교차 도메인 의존성이 확인되었다.
-- 가정이 기록되어 있다.
-- acceptance criteria로 점검 가능하다.
+- 공통 계약과 미정 사항이 `docs/05_shared/init.md`에 반영되어 있다.
+- 병렬 구현 전 또는 후의 상태가 `PLANS.md`에 반영되어 있다.
+- `PLANS.md`에 현재 단계 결과와 다음 단계가 반영되어 있다.
+- 데이터 / 모델 / 백엔드 Python 작업이 모두 동일한 `ener` 가상환경 기준으로 수행되었다.
 - 다음 작업자가 의도를 추측하지 않아도 이어서 작업할 수 있다.
 
 ---
 
-## 신선한 저장소에서의 최우선 행동
+## 저장소를 처음 다룰 때의 최우선 행동
 
 저장소가 아직 문서 하네스 단계라면, 가장 먼저 아래를 수행한다.
 
-1. `PLANS.md` 초안 작성 또는 보완
-2. `docs/00_overview/` 핵심 문서 작성
-3. `docs/06_shared/acceptance-criteria.md` 작성
-4. `docs/01_data/`, `docs/02_modeling/`, `docs/03_mlflow_monitoring/`의 최소 초안 작성
-5. 그 다음 백엔드/프론트엔드 계약 문서 정리
-6. 마지막으로 구현 착수
-
-구현보다 기준 문서를 먼저 세우는 것을 원칙으로 한다.
+1. `PLANS.md` 상태 확인 및 보완
+2. `docs/05_shared/init.md` 확인
+3. 각 도메인 `init.md`의 현재 상태 점검
+4. Python 작업이 필요한 경우 루트 `ener` 가상환경 존재 여부 확인
+5. 공용 의존성 파일 존재 여부 확인
+6. 필요한 공통 계약을 먼저 정리
+7. 그 다음 구현 또는 병렬 작업 착수
